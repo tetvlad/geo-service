@@ -20,12 +20,18 @@ public class MessageSenderImpl implements MessageSender {
     }
 
     public String send(Map<String, String> headers) {
-        String ipAddress = String.valueOf(headers.get(IP_ADDRESS_HEADER));
-        if (ipAddress != null && !ipAddress.isEmpty()) {
-            Location location = geoService.byIp(ipAddress);
-            System.out.printf("Отправлено сообщение: %s", localizationService.locale(location.getCountry()));
-            return localizationService.locale(location.getCountry());
+        String ipAddress = headers.get(IP_ADDRESS_HEADER);
+
+        // Получаем локацию. Метод byIp никогда не должен возвращать null по контракту.
+        Location location = geoService.byIp(ipAddress);
+
+        // Проверяем, что страна в локации - Россия.
+        // Эта проверка безопасно работает, даже если location.getCountry() вернет null.
+        if (Country.RUSSIA.equals(location.getCountry())) {
+            return localizationService.locale(Country.RUSSIA);
         }
+
+        // Во всех остальных случаях (США, Германия, localhost/null) возвращаем английский текст.
         return localizationService.locale(Country.USA);
     }
 }
